@@ -1,12 +1,12 @@
 FROM satijalab/seurat:4.3.0
 
-RUN mkdir /home/scripts
-COPY policy.xml addImage.sh h5ad2rds.R rds2h5adsc.R rds2annImg.py /home/scripts/
+RUN mkdir /home/anndata
+COPY policy.xml addImage.sh h5ad2rds.R rds2h5adsc.R rds2annImg.py /usr/local/bin
 
 RUN apt-get update && \
     apt-get install -y imagemagick bc python3.9 python3-pip && \
     rm /etc/ImageMagick-6/policy.xml && \
-    cp /home/scripts/policy.xml /etc/ImageMagick-6/policy.xml && \
+    cp /usr/local/bin/policy.xml /etc/ImageMagick-6/policy.xml && \
     pip install pandas matplotlib scanpy==1.9.6 && \
     pip install --upgrade numba numpy
 
@@ -25,8 +25,8 @@ RUN R -e "install.packages('remotes'); \
   remotes::install_version('dplyr', '1.1.2')"
 
 
-# Set working dir to /home/gemqcplot
-WORKDIR /home/scripts
+# Set working dir to /home/anndata
+WORKDIR /home/anndata
 
 # Run your R script when the container starts
 CMD ["bash", "addImage.sh"]

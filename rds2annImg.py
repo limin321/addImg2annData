@@ -97,7 +97,7 @@ def main():
         )
 
     adata.write(inputDir + '/tissue_sc.h5ad')
-    print("Finished!!")
+    print("Images added to Scanpy h5ad !!")
 
 if __name__ == "__main__":
     main()

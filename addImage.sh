@@ -8,6 +8,7 @@ set -e
 ## set default values
 hires=4
 lowres=1
+binsize=200
 registif="" # registered image from saw pipeline.
 inh5ad=""
 library_id="S123"
@@ -18,6 +19,7 @@ display_usage(){
   echo "Options:"
   echo " -t, --registif <value>   Set regist.tif from SAW (default: ${registif})"  
   echo " -i, --inh5ad <value>     Set input h5ad from stereopy conversion (default: ${inh5ad})" 
+  echo " -b, --binsize <value>    Set binsize for stereopy conversion (default: ${binsize})" 
   echo " -H, --hires <value>      (Optional) Set high resolution value (default: 4, interpret as 4/100=0.04))" 
   echo " -l, --lowres <value>     (Optional) Set low resolution value (default: 1, interpret as 1/100=0.01))" 
   echo " -d, --library_id <value>     Set library_id (default: $library_id)" 
@@ -33,6 +35,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -t|--registif) registif="$2"; shift 2;;
     -i|--inh5ad) inh5ad="$2"; shift 2;;
+    -b|--binsize) binsize="$2"; shift 2;;
     -H|--hires) hires="$2"; shift 2;;
     -l|--lowres) lowres="$2"; shift 2;;
     -d|--library_id) library_id="$2"; shift 2;;
@@ -55,6 +58,7 @@ fi
 # Your script logic here
 echo "registif: ${registif}"
 echo "inh5ad: ${inh5ad}"
+echo "binsize: ${binsize}"
 echo "hires: ${hires}"
 echo "lowres: ${lowres}"
 echo "library_id: ${library_id}"
@@ -62,21 +66,6 @@ echo "outpath: ${outpath}"
 
 
 #########################
-
-# apt-get update
-# apt install imagemagick -y
-# rm /etc/ImageMagick-6/policy.xml
-# cp policy.xml /etc/ImageMagick-6/policy.xml
-
-# apt-get install bc
-# apt-get install python3.9 -y
-# pip install pandas
-# pip install matplotlib
-# pip install scanpy==1.9.6
-# pip install --upgrade numba numpy
-
-
-
 mkdir -p ${outpath}/addimage
 chmod 777 ${outpath}/addimage
 
@@ -87,12 +76,12 @@ convert -sample ${lowres}%x${lowres}% ${registif} ${outpath}/addimage/tissue_low
 # step2: add lowres image to rds
 hi=$(echo "scale=2; ${hires}/100" | bc)
 lo=$(echo "scale=2; ${lowres}/100" | bc)
-Rscript h5ad2rds.R -i ${inh5ad} -b 200 --image_dir ${outpath}/addimage/ -l ${lo} --hires ${hi}
+Rscript /usr/local/bin/h5ad2rds.R -i ${inh5ad} -b ${binsize} --image_dir ${outpath}/addimage/ -l ${lo} --hires ${hi}
 
 # step2-1 generate h5ad without image from rds, which is the input for scanpy adding images
 out=$(basename "${inh5ad}")
 outRDS="${out%.h5ad}"
-Rscript rds2h5adsc.R -r ${outpath}/addimage/${outRDS}.RDS
+Rscript /usr/local/bin/rds2h5adsc.R -r ${outpath}/addimage/${outRDS}.RDS
 
 # step3: add low- and hi- resolution images to h5ad from step2-1, the result h5ad overwrites the input h5ad.
 mkdir -p ${outpath}/addimage/spatial
@@ -101,20 +90,5 @@ mv ${outpath}/addimage/tissue_*.png ${outpath}/addimage/spatial
 mv ${outpath}/addimage/tissue_*.csv ${outpath}/addimage/spatial
 mv ${outpath}/addimage/*.json ${outpath}/addimage/spatial
 # add both hires and lowres image to h5ad 
-python3 rds2annImg.py --inputDir ${outpath}/addimage --library_id ${library_id}
+python3 /usr/local/bin/rds2annImg.py --inputDir ${outpath}/addimage --library_id ${library_id}
 
-# bash addImage.sh -t ../ssDNA_SS200000135TL_D1_regist.tif -i ../seurat/S135TL_D1.tissue_seurat.h5ad
-# registif: ../ssDNA_SS200000135TL_D1_regist.tif
-# inh5ad: ../seurat/S135TL_D1.tissue_seurat.h5ad
-# hires: 4
-# lowres: 1
-# library_id: S123
-# outpath: /home/test/stereopy_demo/formatConvertion/scripts
-
-# bash addImage.sh -t ../ssDNA_SS200000135TL_D1_regist.tif -i ../seurat/S135TL_D1.tissue_seurat.h5ad -H 6 -l 2 -d ss321 -o /home/test/stereopy_demo/formatConvertion
-# registif: ../ssDNA_SS200000135TL_D1_regist.tif
-# inh5ad: ../seurat/S135TL_D1.tissue_seurat.h5ad
-# hires: 6
-# lowres: 2
-# library_id: ss321
-# outpath: /home/test/stereopy_demo/formatConvertion
