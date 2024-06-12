@@ -27,7 +27,7 @@ Required inputs:
 6) library_id. Default is "S123". Set your read library ID value.
 
 ##### Example of running
-##Docker**
+**Docker**
 Use default value, assuming you have the input tif and h5ad in the local_input_dir
 ```
 docker run --rm -v <local_input_dir>:/home/test limin321/addimg2anndata:0.0.0 bash addImage.sh -t /home/test/ssDNA_SS200000135TL_D1_regist.tif -i /home/test/S135TL_D1.tissue_seurat.h5ad
@@ -36,7 +36,8 @@ Set your own value, assuming you have the input tif and h5ad in the local_input_
 ```
 docker run --rm -v /stomics_data/formatConvertion:/home/test limin321/addimg2anndata:0.0.0 bash addImage.sh -t /home/test/seurat/ssDNA_SS200000135TL_D1_regist.tif -i /home/test/seurat/S135TL_D1.tissue_seurat.h5ad -H 6 -l 2 -d SS200000135TL -o /home/test/seurat
 ```
-##Singularity##
+**Singularity**
+
 Here I have `ssDNA_SS200000135TL_D1_regist.tif` and `S135TL_D1.tissue_seurat.h5ad` inputs files in the `/stomics_data/formatConvertion/seurat` folder.
 ```
 # use default values
@@ -68,12 +69,12 @@ seurat/addimage/
 2 directories, 7 files
 
 ```
-You should see the folder `addimage`, containing 3 files and 1 folder, named spatial.
-The 3 files are:
-S135TL_D1.tissue_seurat.RDS -- the seurat RDS data with image. It can be loaded to R by `readRDS()` function.
-tissue_sc.h5ad -- the scanpy h5ad data with images. It can be read in scanpy by `sc.read_h5ad()` function.
-spatialFeature_QC.png -- this is QC plot to show the image is added to RDS successfully. The region withot tissue should be black, the image should be the background.
-spatial -- the folder contains images related files, which mimic files from Visium Spaceranger output `spatial` folder.
+You should see the folder `addimage`, containing 3 files and 1 folder, named spatial. <br />
+The 3 files are: <br />
+S135TL_D1.tissue_seurat.RDS -- the seurat RDS data with image. It can be loaded to R by `readRDS()` function. <br />
+tissue_sc.h5ad -- the scanpy h5ad data with images. It can be read in scanpy by `sc.read_h5ad()` function. <br />
+spatialFeature_QC.png -- this is QC plot to show the image is added to RDS successfully. The region withot tissue should be black, the image should be the background. <br />
+spatial -- the folder contains images related files, which mimic files from Visium Spaceranger output `spatial` folder. <br />
 
 
 
