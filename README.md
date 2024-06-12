@@ -71,10 +71,10 @@ seurat/addimage/
 ```
 You should see the folder `addimage`, containing 3 files and 1 folder, named spatial. <br />
 The 3 files are: <br />
-S135TL_D1.tissue_seurat.RDS -- the seurat RDS data with image. It can be loaded to R by `readRDS()` function. <br />
-tissue_sc.h5ad -- the scanpy h5ad data with images. It can be read in scanpy by `sc.read_h5ad()` function. <br />
-spatialFeature_QC.png -- this is QC plot to show the image is added to RDS successfully. The region withot tissue should be black, the image should be the background. <br />
-spatial -- the folder contains images related files, which mimic files from Visium Spaceranger output `spatial` folder. <br />
+*S135TL_D1.tissue_seurat.RDS* -- the seurat RDS data with image. It can be loaded to R by `readRDS()` function. <br />
+*tissue_sc.h5ad* -- the scanpy h5ad data with images. It can be read in scanpy by `sc.read_h5ad()` function. <br />
+*spatialFeature_QC.png* -- this is QC plot to show the image is added to RDS successfully. The region withot tissue should be black, the image should be the background. <br />
+*spatial* -- the folder contains images related files, which mimic files from Visium Spaceranger output `spatial` folder. <br />
 
 
 
