@@ -1,7 +1,7 @@
 FROM satijalab/seurat:4.3.0
 
 RUN mkdir /home/anndata
-COPY policy.xml addImage.sh h5ad2rds.R rds2h5adsc.R rds2annImg.py /usr/local/bin
+COPY policy.xml addImage.sh gem2rds.r rds2h5adsc.R rds2annImg.py /usr/local/bin
 
 RUN apt-get update && \
     apt-get install -y imagemagick bc python3.9 python3-pip && \

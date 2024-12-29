@@ -19,6 +19,4 @@ rds2h5adscanpy <- function(rdsf){
 
 
 rds2h5adscanpy(rdsf = rds_path)
-print("Image added to seurat RDS")
-#print("Image is added to your seurat and scanpy h5ad is generated! Well Done!!")
 quit('yes', 0)

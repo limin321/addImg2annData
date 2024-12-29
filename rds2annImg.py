@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.image import imread
 import scanpy as sc
+import numpy as np
+import anndata
 
 
 def main():
@@ -95,6 +97,20 @@ def main():
         adata.uns["spatial"][library_id]["metadata"]["source_image_path"] = str(
             source_image_path
         )
+    
+    # convert image to be 3 channel to be compatible with regular python tool
+    data: np.ndarray = adata.uns["spatial"][library_id]["images"]["hires"]
+    adata.uns["spatial"][library_id]["images"]["hires"] = data.reshape((*data.shape, 1))
+
+    data: np.ndarray = adata.uns["spatial"][library_id]["images"]["lowres"]
+    adata.uns["spatial"][library_id]["images"]["lowres"] = data.reshape((*data.shape, 1))
+     
+    # convert array to numbers in the 'scalefactors' dict
+    converted_data = {
+        key: value[0] if isinstance(value, (list, np.ndarray)) else value
+        for key, value in adata.uns['spatial'][library_id]["scalefactors"].items()
+    }
+    adata.uns["spatial"][library_id]["scalefactors"] = converted_data
 
     adata.write(inputDir + '/tissue_sc.h5ad')
     print("Images added to Scanpy h5ad !!")
