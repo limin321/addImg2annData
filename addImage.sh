@@ -13,6 +13,7 @@ registif="" # registered image from saw pipeline.
 ingem=""
 library_id="S123"
 outpath="/home/test"
+cellbin=FALSE
 
 display_usage(){
   echo "Usage: $0 [options]"
@@ -23,10 +24,11 @@ display_usage(){
   echo " -H, --hires <value>      (Optional) Set high resolution value (default: 4, interpret as 4/100=0.04))" 
   echo " -l, --lowres <value>     (Optional) Set low resolution value (default: 1, interpret as 1/100=0.01))" 
   echo " -d, --library_id <value>     Set library_id (default: $library_id)" 
+  echo " -c, --cellbin <value>     Set cellbin (default: $cellbin)" 
   echo " -o, --outpath <paths>      (Optional) Set output dir path (default: ${outpath})" 
   echo " -h, --help               Display this help message"
   echo "Example:"
-  echo " $0 -t ssDNA_SS200000135TL_D1_regist.tif -i S135TL_D1.tissue_seurat.h5ad -h 4 -l 1 -d "s12345" -o ."
+  echo " $0 -t ssDNA_SS200000135TL_D1_regist.tif -i S135TL_D1.tissue.gem.gz -h 4 -l 1 -d "s12345" -o ."
 }
 
 # Parse command-line arguments
@@ -39,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     -H|--hires) hires="$2"; shift 2;;
     -l|--lowres) lowres="$2"; shift 2;;
     -d|--library_id) library_id="$2"; shift 2;;
+    -c|--cellbin) cellbin=$(echo "$2" | tr '[:lower:]' '[:upper:]'); shift 2;;
     -o|--outpath) outpath="$2"; shift 2;;
     -h|--help) display_usage; exit 0;;
     *) echo "Error: Unknown option $key"; display_usage; exit 1;;
@@ -46,7 +49,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-# Check if all arguments are provided
+# Check if required arguments are provided
 if [[ -z ${registif} || -z ${ingem} ]]; then
   echo "Error: Invalid argument: $key"
   display_usage
@@ -62,6 +65,7 @@ echo "binsize: ${binsize}"
 echo "hires: ${hires}"
 echo "lowres: ${lowres}"
 echo "library_id: ${library_id}"
+echo "cellbin: ${cellbin}"
 echo "outpath: ${outpath}"
 
 
@@ -76,11 +80,12 @@ gemname=$(echo "$(basename $ingem)")
 
 
 nline=$(gunzip -c ${ingem} | head -n20 | awk -F'\t' 'NR==10{print NF}')
-if [ "${nline}" -eq 6 ]; then
+if [ "${nline}" -ne 5 ]; then
   echo "Saw8 gem file!"
   gunzip -c ${ingem} | head -n8  > ${outpath}/addimage/header.gem
   gunzip -c ${ingem} | awk 'BEGIN {OFS="\t"} NR >= 9 {for (i=2; i<=NF; i++) printf "%s%s", $i, (i<NF?OFS:ORS)}' | awk 'BEGIN {OFS="\t"} NR==1 {$1="geneID"} 1' > ${outpath}/addimage/counts2.gem
   cat ${outpath}/addimage/header.gem ${outpath}/addimage/counts2.gem | gzip > ${outpath}/addimage/${gemname}
+  chmod 777 ${outpath}/addimage/*
 fi
 # step1: generate low and hi resolution images
 convert -sample ${hires}%x${hires}% ${registif} ${outpath}/addimage/tissue_hires_image.png
@@ -96,7 +101,15 @@ else
   file1=${outpath}/addimage/${gemname}
 fi
 
-Rscript /usr/local/bin/gem2rds.r --gemf ${file1} --bin ${binsize} --image_dir ${outpath}/addimage/ --lowres ${lo} --hires ${hi}
+if [ "$cellbin" = "FALSE" ]; then
+    # squarebin
+    Rscript /usr/local/bin/gem2rds.r --gemf ${file1} --bin ${binsize} --image_dir ${outpath}/addimage/ --lowres ${lo} --hires ${hi}
+elif [ "$cellbin" = "TRUE" ]; then
+    # cellbin
+    Rscript /usr/local/bin/gem2rds.r --gemf ${file1} --bin 1 --image_dir ${outpath}/addimage/ --lowres ${lo} --hires ${hi} -c ${cellbin}
+else
+    echo "Invalid value for cellbin. Expected TRUE or FALSE."
+fi
 
 echo "Image is added to Seurat RDS file!"
 # step3-1 generate h5ad without image from rds, which is the input for scanpy adding images
@@ -112,6 +125,6 @@ mv ${outpath}/addimage/*.json ${outpath}/addimage/spatial
 python3 /usr/local/bin/rds2annImg.py --inputDir ${outpath}/addimage --library_id ${library_id}
 
 # clean output
-if [ "$nline" -eq 6 ]; then  
+if [ "$nline" -ne 5 ]; then  
   rm ${outpath}/addimage/*.gem*
 fi

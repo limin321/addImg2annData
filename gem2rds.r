@@ -15,6 +15,7 @@ args <- add_argument(args, "--bin", help = "bin size, default is 200", default=2
 args <- add_argument(args, "--image_dir", help = "The path of the tissue_lowres_image.png", default = ".")
 args <- add_argument(args, "--lowres", help = "scale of image low resolution, ex, 0.01", default = 0.01)
 args <- add_argument(args, "--hires", help = "scale of image high resolution, ex, 0.04", default = 0.04)
+args <- add_argument(args, "--cellbin", help = "This is cellbin data.", default = FALSE)
 argv <- parse_args(args)
 
 gemf=argv$gemf
@@ -23,6 +24,7 @@ binsize = argv$bin
 lowres=argv$lowres
 hires=argv$hires
 imageDir=argv$image_dir
+cellbin=argv$cellbin
 
 prefix = strsplit(basename(gemf),"\\.")[[1]][1]
 outfile = paste0(prefix, ".addimg.rds") # "B03209A212.addimg.rds"
@@ -134,9 +136,71 @@ addimg2rds <- function(obj=object,
   return(obj)
 }
 
-obj1 <- gem2seurat(gemf = gemf,
+
+cellgem2seurat <- function(
+    gemf= gemf, # take gem.gz
+    binsize = binsize,
+    prefix = prefix
+){
+  data <- fread(gemf)
+  data$x <- as.numeric(data$x)
+  data$y <- as.numeric(data$y)
+  
+  # #### Step 2 convert to different binsize --- Group counts into bins
+  # reorganize the count matrix to be gene by binsize(similar to cell)
+  data$MIDCount <- as.numeric(data$MIDCount)
+  data <- data[, .(counts=sum(MIDCount)), by = .(geneID, x, y, CellID)]
+
+  #' create sparse matrix from stereo
+  data$cell <- data$CellID
+  data$geneIdx <- match(data$geneID, unique(data$geneID))
+  data$cellIdx <- match(data$cell, unique(data$cell))
+  
+  mat <- sparseMatrix(i = data$geneIdx, j = data$cellIdx, x = data$counts,
+                      dimnames = list(unique(data$geneID), unique(data$cell))) # 43795 x 15611
+    
+  #### Step 3 create meta data for seurat object.  
+  cell_coords <- data[, .SD[1], by = CellID, .SDcols = c("CellID", "x", "y")]
+  cell_coords <- cell_coords[, !duplicated(colnames(cell_coords)), with = FALSE]
+  rownames(cell_coords) <- cell_coords$CellID
+  
+  #### Step 4 Create seurat obj
+  seurat_spatialObj <- CreateSeuratObject(counts = mat, project = 'stereo', assay = 'Spatial',names.delim = ':', meta.data = cell_coords)
+  
+  #### Step 5, add meta.features to counts slot
+  spatial_data <- GetAssayData(seurat_spatialObj, assay = "Spatial", slot = "counts")
+  n_counts <- rowSums(spatial_data)
+  n_cells <- rowSums(spatial_data > 0)
+  mean_umi <- round(n_counts/n_cells)
+  
+  meta_features <- data.frame(
+      n_cells = n_cells,
+      n_counts = n_counts,
+      mean_umi = mean_umi
+  )
+  seurat_spatialObj[["Spatial"]]@meta.features <- meta_features
+  
+  #### add mitochondria percentage
+  mtPattern <- '^mt-|^Mt-|^MT-'
+  seurat_spatialObj <- PercentageFeatureSet(seurat_spatialObj, mtPattern, col.name = "percent.mito")  
+  return(seurat_spatialObj)
+}
+
+
+
+#cellbin=FALSE
+if (cellbin==TRUE){
+  obj1 <- cellgem2seurat(gemf=gemf,
+                  binsize=1,
+                  prefix=prefix)
+
+}else{
+  obj1 <- gem2seurat(gemf = gemf,
                   binsize = binsize,
                   prefix = prefix)
+
+}
+
 
 obj2 <- addimg2rds(obj = obj1,
            binsize = binsize,

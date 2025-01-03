@@ -12,6 +12,8 @@ docker pull limin321/addimg2anndata:0.0.1
 
 **Singularity**
 ```
+export SINGULARITY_CACHEDIR=/home/your/dir
+export TMPDIR=/home/your/dir
 singularity pull addimg2anndata.sif docker://limin321/addimg2anndata:0.0.1
 ```
 
@@ -19,7 +21,7 @@ singularity pull addimg2anndata.sif docker://limin321/addimg2anndata:0.0.1
 ### Convert Stereo-Seq data to Seurat RDS and Scanpy h5ad file
 #### Prepare inputs
 Required inputs:
-1) regist.tif. This file is the output of SAW pipeline, normally located in the `03.register/ssDNA_SS200000135TL_D1_regist.tif` for Saw7; and `outs/image/SS200000135TL_D1_ssDNA_regist.tif`.
+1) regist.tif. This file is the output of SAW pipeline, normally located in the `03.register/ssDNA_SS200000135TL_D1_regist.tif` for Saw7; and `outs/image/SS200000135TL_D1_ssDNA_regist.tif` for Saw8.
 2) gem.gz file. For example, xxx.tissue.gem.gz file. The gem file can be converted from gef file. Please refer SAW pipeline on how to generate gem file if not provided in the standard SAW outputs.
 3) bin_size. Default is bin=200. This is from previous step, but won't really affect this tool running.
 4) hires. Default is 4, which means scaling the original tif image to 4%.
@@ -36,21 +38,30 @@ Set your own value, assuming you have the input tif and gem.gz in the local_inpu
 ```
 docker run --rm -v /stomics_data/formatConvertion:/home/test limin321/addimg2anndata:0.0.1 bash addImage.sh -t /home/test/seurat/ssDNA_SS200000135TL_D1_regist.tif -i /home/test/seurat/S135TL_D1.tissue.gem.gz -H 6 -l 2 -d SS200000135TL -o /home/test/seurat
 ```
+###### Convert cellbin gem.gz file.
+```
+ docker run --rm -v /stomics_data/liminData/project/cellbinconvert/cellbin:/home/test limin321/addimg2anndata:0.0.1 bash addImage.sh -t /home/test/SS200000135TL_DAPI_regist.tif -i /home/test/SS200000135TL.adjusted.cellbin.gem.gz -b 1 -c TRUE
+ ```
+
 **Singularity**
 
 Here I have `ssDNA_SS200000135TL_D1_regist.tif` and `S135TL_D1.tissue.gem.gz` inputs files in the `/stomics_data/formatConvertion/seurat` folder.
 ```
 # use default values
-singularity run -B /stomics_data/formatConvertion:/home/anndata addimg2anndata.sif bash addImage.sh -t ./seurat/ssDNA_SS200000135TL_D1_regist.tif -i ./seurat/S135TL_D1.tissue.gem.gz
+singularity run -B /stomics_data/formatConvertion:/home/test addimg2anndata.sif bash addImage.sh -t ./seurat/ssDNA_SS200000135TL_D1_regist.tif -i ./seurat/S135TL_D1.tissue.gem.gz
 
 # specify your values
-singularity run -B /stomics_data/formatConvertion:/home/anndata addimg2anndata.sif bash addImage.sh -t ./seurat/ssDNA_SS200000135TL_D1_regist.tif -i ./seurat/S135TL_D1.tissue.gem.gz -H 6 -l 2 -b 100 -d SS200000135TL -o ./seurat
+singularity run -B /stomics_data/formatConvertion:/home/test addimg2anndata.sif bash addImage.sh -t ./seurat/ssDNA_SS200000135TL_D1_regist.tif -i ./seurat/S135TL_D1.tissue.gem.gz -H 6 -l 2 -b 100 -d SS200000135TL -o ./seurat
 
 # replace the <place_holder> with your data path
-singularity run -B </stomics_data/formatConvertion>:/home/anndata addimg2anndata.sif bash addImage.sh -t <./seurat/ssDNA_SS200000135TL_D1_regist.tif> -i <./seurat/S135TL_D1.tissue.gem.gz> -H 6 -l 2 -b 100 -d SS200000135TL -o <./seurat>
+singularity run -B </stomics_data/formatConvertion>:/home/test addimg2anndata.sif bash addImage.sh -t <./seurat/ssDNA_SS200000135TL_D1_regist.tif> -i <./seurat/S135TL_D1.tissue.gem.gz> -H 6 -l 2 -b 100 -d SS200000135TL -o <./seurat>
 
 ```
-
+###### convert cellbin gem.gz file.
+make sure to set arguments `-b 1 -c TRUE`, see following example.
+```
+singularity run -B /stomics_data/liminData/project/cellbinconvert:/home/test addimg2anndata.sif bash addImage.sh -t ./cellbin/SS200000135TL_DAPI_regist.tif -i ./cellbin/SS200000135TL.adjusted.cellbin.gem.gz -H 6 -l 2 -b 1 -d SS200000135TL -c TRUE -o ./cellbin/
+```
 
 ### Outputs
 For successful run, you expect to have following outputs in the output path you specified (Default is the workding dir).
