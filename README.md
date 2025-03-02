@@ -53,7 +53,6 @@ docker run --rm -v /Users/liminchen/Limchen/apps/docker/addimgtest:/home/test li
 
 # square bin1 lasso data
 docker run --rm -v /Users/liminchen/Limchen/apps/docker/addimgtest:/home/test limin321/addimg2anndata:0.0.1 bash addImage.sh -t /home/test/SS200000135TL_ssDNA_regist.tif -i /home/test/SS200000135TL.lasso.bin1.1084_bin1.gem.gz -m /home/test/SS200000135TL.lasso.1084_bin1.mask.tif
-docke
 ```
 
 
