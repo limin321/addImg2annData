@@ -43,6 +43,20 @@ docker run --rm -v /stomics_data/formatConvertion:/home/test limin321/addimg2ann
  docker run --rm -v /stomics_data/liminData/project/cellbinconvert/cellbin:/home/test limin321/addimg2anndata:0.0.1 bash addImage.sh -t /home/test/SS200000135TL_DAPI_regist.tif -i /home/test/SS200000135TL.adjusted.cellbin.gem.gz -b 1 -c TRUE
  ```
 
+###### Convert lasso data -- use bin1 to do lasso
+To add image to lasso data, 1) get the json file by doing lasso in StereoMap4, making sure it is bin1; 2) run `saw reanalyze lasso ...` to get a folder called segmentation, which include the gem.gz and mask.tif files; for cellbin data, you need to run `saw convert gef2gem ...` to get the gem.gz file. Eventually, you need three files as inputs: xx.lasso.xx.gem.gz, xx.lasso.mask.tif, regist.tif.
+
+Here are the example code:
+```
+# cellbin lasso data
+docker run --rm -v /Users/liminchen/Limchen/apps/docker/addimgtest:/home/test limin321/addimg2anndata:0.0.1 addImage.sh -t /home/test/SS200000135TL_ssDNA_regist.tif -i /home/test/SS200000135TL.subcell.label.cellbin.gem.gz -m /home/test/SS200000135TL.lasso.cellbin.subcell.mask.tiff -b 1 -c TRUE
+
+# square bin1 lasso data
+docker run --rm -v /Users/liminchen/Limchen/apps/docker/addimgtest:/home/test limin321/addimg2anndata:0.0.1 bash addImage.sh -t /home/test/SS200000135TL_ssDNA_regist.tif -i /home/test/SS200000135TL.lasso.bin1.1084_bin1.gem.gz -m /home/test/SS200000135TL.lasso.1084_bin1.mask.tif
+docke
+```
+
+
 **Singularity**
 
 Here I have `ssDNA_SS200000135TL_D1_regist.tif` and `S135TL_D1.tissue.gem.gz` inputs files in the `/stomics_data/formatConvertion/seurat` folder.
